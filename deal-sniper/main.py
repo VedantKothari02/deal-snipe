@@ -3,7 +3,10 @@ import logging
 import os
 import signal
 import sys
+sys.stdout.reconfigure(encoding="utf-8")
+
 import requests
+
 
 # 1. Initialize logging before any other subsystem
 os.makedirs("logs", exist_ok=True)
@@ -44,31 +47,36 @@ def get_watcher_for_site(site: str):
     return None
 
 def on_message(message_text: str):
-    """
-    Synchronous callback for new Telegram messages.
-    Non-blocking. Parses and pushes to async queue.
-    """
+
     if not message_text:
         return
 
-    links = extract_links(message_text)
+    links = extract_links(message_text)[:10]
 
     for link in links:
         try:
             parsed_data = parse_deal(message_text, link)
-            if not parsed_data or parsed_data['site'] == 'unknown':
+            
+            logger.info(f"Parsed deal: {parsed_data}")
+            
+            if not parsed_data or parsed_data["site"] == "unknown":
                 continue
 
             quick_score = score_deal(parsed_data)
 
             if quick_score >= DEAL_SCORE_THRESHOLD:
-                logger.info(f"Queuing deal for verification: {parsed_data['url']} (Score: {quick_score})")
-                asyncio.create_task(queue.put(parsed_data))
+                logger.info(f"Queuing deal: {parsed_data['product_name']} | Score {quick_score}")
+
+                loop = asyncio.get_running_loop()
+                loop.create_task(queue.put(parsed_data))
+
             else:
-                logger.debug(f"Deal discarded due to low score ({quick_score}): {parsed_data['url']}")
+                logger.info(f"Deal discarded due to low score ({quick_score}): {parsed_data['url']}")
 
         except Exception as e:
             logger.error(f"Error processing link {link}: {e}")
+
+
 
 async def verification_worker():
     """

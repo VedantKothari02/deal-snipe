@@ -19,5 +19,5 @@ CHANNELS = [
     -5013256582      # your test channel
 ]
 
-DEAL_SCORE_THRESHOLD = 60
+DEAL_SCORE_THRESHOLD = 10
 DRY_RUN = True
