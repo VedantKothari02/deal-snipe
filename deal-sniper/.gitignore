@@ -1,5 +1,6 @@
 .env
 logs/
 storage/
+storage/*.db
 *.session
 __pycache__/
